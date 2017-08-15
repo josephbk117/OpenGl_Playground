@@ -82,6 +82,7 @@ int main()
 	Shader lightShader("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\lightBasic.vs",
 		"C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\lightBasic.fs");
 	Model ourModel("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\nanosuit2.obj");
+	Model podium("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\podium.obj");
 
 	// set up vertex data (and buffer(s)) and configure vertex attributes
 	// ------------------------------------------------------------------
@@ -272,13 +273,14 @@ int main()
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, specularMap);
 
-		containerShader.setMat4("model", glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f)));		
+		containerShader.setMat4("model", glm::scale(model, glm::vec3(0.8f, 0.8f, 0.8f)) * glm::translate(model, glm::vec3(0, -3.1, 5)));
+		podium.Draw(containerShader);
+		containerShader.setMat4("model", glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f)) * glm::translate(model,glm::vec3(0,0,21)));
 		ourModel.Draw(containerShader);
 		containerShader.setMat4("model", glm::scale(model, glm::vec3()));
 		// render the cube
 		glBindVertexArray(cubeVAO);
-		
-		
+
 		for (unsigned int i = 0; i < 10; i++)
 		{
 			glm::mat4 model;
@@ -300,7 +302,7 @@ int main()
 		for (unsigned int i = 0; i < 4; i++)
 		{
 			model = glm::mat4();
-			glm::vec3 newPos = glm::vec3(sin(cos(currentFrame * 0.25f) *(i + 1) * currentFrame * 0.18f) * 8, cos(sin(currentFrame * 0.22)*(i + 1) * currentFrame * 0.12) * 3, sin(i * cos(i * currentFrame * 0.18)) * 8);
+			glm::vec3 newPos = glm::vec3(sin(cos(currentFrame * 0.15f) *(i + 1) * currentFrame * 0.13f) * 8, cos(sin(currentFrame * 0.16)*(i + 1) * currentFrame * 0.12) * 3, sin(i * cos(i * currentFrame * 0.18)) * 8);
 			containerShader.use();
 			std::string uniformName = "pointLights[" + std::to_string(i) + "].position";
 			containerShader.setVec3(uniformName, newPos);
