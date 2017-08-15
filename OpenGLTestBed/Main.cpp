@@ -253,8 +253,6 @@ int main()
 		containerShader.setVec3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
 		containerShader.setFloat("material.shininess", 20);
 
-		lightPos = glm::vec3(sin(currentFrame * cos(currentFrame * 0.8f)), cos(currentFrame * sin(currentFrame*0.5f)), sin(currentFrame)*1.8);
-		containerShader.setVec3("light.position", lightPos);
 		//containerShader.setVec3("light.direction", glm::vec3(1.0f, 0.3f, 0.5f));
 		containerShader.setVec3("viewPos", camera.Position);
 
@@ -274,7 +272,9 @@ int main()
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, specularMap);
 
+		containerShader.setMat4("model", glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f)));		
 		ourModel.Draw(containerShader);
+		containerShader.setMat4("model", glm::scale(model, glm::vec3()));
 		// render the cube
 		glBindVertexArray(cubeVAO);
 		
@@ -300,7 +300,7 @@ int main()
 		for (unsigned int i = 0; i < 4; i++)
 		{
 			model = glm::mat4();
-			glm::vec3 newPos = glm::vec3(sin(cos(currentFrame * 0.24f) *(i + 1) * currentFrame) * 8, cos(sin(currentFrame)*(i + 1) * currentFrame) * 3, sin(i * cos(i * currentFrame)) * 8);
+			glm::vec3 newPos = glm::vec3(sin(cos(currentFrame * 0.25f) *(i + 1) * currentFrame * 0.18f) * 8, cos(sin(currentFrame * 0.22)*(i + 1) * currentFrame * 0.12) * 3, sin(i * cos(i * currentFrame * 0.18)) * 8);
 			containerShader.use();
 			std::string uniformName = "pointLights[" + std::to_string(i) + "].position";
 			containerShader.setVec3(uniformName, newPos);
