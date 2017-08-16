@@ -58,6 +58,7 @@ int main()
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 	glEnable(GL_MULTISAMPLE);
 
 	GLenum err = glewInit();
@@ -76,6 +77,7 @@ int main()
 		"C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\lightBasic.fs");
 	Model ourModel("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\nanosuit2.obj");
 	Model podium("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\podium.obj");
+	Model houseModel("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\houseModels.obj");
 
 	// set up vertex data (and buffer(s)) and configure vertex attributes
 	// ------------------------------------------------------------------
@@ -160,7 +162,6 @@ int main()
 	containerShader.setInt("diffuseTex", 0);
 	containerShader.setInt("specularTex", 1);
 
-
 	// positions all containers
 	glm::vec3 cubePositions[] = {
 		glm::vec3(0.0f,  0.0f,  0.0f),
@@ -230,12 +231,11 @@ int main()
 		// -----
 		processInput(window);
 
-		glClearColor(0.6f, 0.2f, 0.2f, 1.0f);
+		glClearColor(0.4f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// be sure to activate shader when setting uniforms/drawing objects
 		containerShader.use();
-
 		containerShader.setVec3("material.ambient", glm::vec3(1.0f, 0.5f, 0.31f));
 		containerShader.setVec3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
 		containerShader.setFloat("material.shininess", 20);
@@ -258,10 +258,13 @@ int main()
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, specularMap);
 
+		containerShader.setMat4("model", glm::translate(model, glm::vec3(2, 0, 4)) * glm::scale(model, glm::vec3(0.2, 0.2, 0.2)) * glm::rotate(model, glm::radians(-90.0f), glm::vec3(0, 1, 0)));
+		houseModel.Draw(containerShader);
+		model = glm::mat4();
 		containerShader.setMat4("model", glm::translate(model, glm::vec3(0, -1.25, 4)) * glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f)));
 		model = glm::mat4();
 		podium.Draw(containerShader);
-		containerShader.setMat4("model", glm::translate(model, glm::vec3(0, 0, 4)) * glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f)));
+		containerShader.setMat4("model", glm::translate(model, glm::vec3(0, 0, 4)) * glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f)) *glm::rotate(model, currentFrame, glm::vec3(0, 1, 0)));
 
 		ourModel.Draw(containerShader);
 		containerShader.setMat4("model", glm::scale(model, glm::vec3()));
