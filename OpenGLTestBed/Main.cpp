@@ -31,14 +31,11 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-// lighting
-glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+unsigned int loadTexture(char const * path, bool);
 
-unsigned int loadTexture(char const * path);
 
 int main()
 {
-
 	glfwInit();
 	glfwWindowHint(GLFW_SAMPLES, 8);
 
@@ -75,9 +72,26 @@ int main()
 		"C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\basic.fs");
 	Shader lightShader("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\lightBasic.vs",
 		"C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\lightBasic.fs");
+	Shader transparentShader("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\transparentBasic.vs",
+		"C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\transparentBasic.fs");
+
 	Model ourModel("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\nanosuit2.obj");
 	Model podium("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\podium.obj");
 	Model houseModel("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\houseModels.obj");
+
+
+	//---transparent quad 
+	float transparentVertices[] = {
+		// positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
+		0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+		0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
+		1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+
+		0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+		1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+		1.0f,  0.5f,  0.0f,  1.0f,  0.0f
+	};
+
 
 	// set up vertex data (and buffer(s)) and configure vertex attributes
 	// ------------------------------------------------------------------
@@ -155,12 +169,47 @@ int main()
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	unsigned int diffuseMap = loadTexture("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\cartoonyCrate.jpg");
-	unsigned int specularMap = loadTexture("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\cartoonyCrate_Specular.jpg");
+	//---------------------Quad With Texture
+	unsigned int transparentVAO, transparentVBO;
+	glGenVertexArrays(1, &transparentVAO);
+	glGenBuffers(1, &transparentVBO);
+
+	glBindVertexArray(transparentVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, transparentVBO);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(transparentVertices), transparentVertices, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
+	glBindVertexArray(0);
+	//------------
+
+	unsigned int diffuseMap = loadTexture("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\cartoonyCrate.jpg", false);
+	unsigned int specularMap = loadTexture("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\cartoonyCrate_Specular.jpg", false);
+	unsigned int transparentTexture = loadTexture("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\flowers.png", true);
+
+	transparentShader.use();
+	transparentShader.setInt("transTexture", 0);
 
 	containerShader.use();
 	containerShader.setInt("diffuseTex", 0);
 	containerShader.setInt("specularTex", 1);
+
+
+	// transparent vegetation locations
+	// --------------------------------
+	std::vector<glm::vec3> vegetation
+	{
+		glm::vec3(-1.5f, 0.0f, -0.48f),
+		glm::vec3(1.5f, 0.0f, 0.51f),
+		glm::vec3(0.0f, 0.0f, 0.7f),
+		glm::vec3(-0.3f, 0.0f, -2.3f),
+		glm::vec3(0.5f, 0.0f, -0.6f)
+	};
+
 
 	// positions all containers
 	glm::vec3 cubePositions[] = {
@@ -183,11 +232,12 @@ int main()
 		glm::vec3(-4.0f,  2.0f, -12.0f),
 		glm::vec3(0.0f,  0.0f, -3.0f)
 	};
+#pragma region Light Set Up
 
 	// directional light
 	containerShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-	containerShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-	containerShader.setVec3("dirLight.diffuse", 0.9f, 0.8f, 0.8f);
+	containerShader.setVec3("dirLight.ambient", 0.15f, 0.1f, 0.08f);
+	containerShader.setVec3("dirLight.diffuse", 0.9f, 0.85f, 0.85f);
 	containerShader.setVec3("dirLight.specular", 0.7f, 0.7f, 0.7f);
 	// point light 1
 	//containerShader.setVec3("pointLights[0].position", pointLightPositions[0]);
@@ -195,7 +245,7 @@ int main()
 	containerShader.setVec3("pointLights[0].diffuse", 0.8f, 0.8f, 0.8f);
 	containerShader.setVec3("pointLights[0].specular", 1.0f, 1.0f, 1.0f);
 	containerShader.setFloat("pointLights[0].constant", 1.0f);
-	containerShader.setFloat("pointLights[0].linear", 0.09);
+	containerShader.setFloat("pointLights[0].linear", 0.19);
 	containerShader.setFloat("pointLights[0].quadratic", 0.032);
 	// point light 2
 	//containerShader.setVec3("pointLights[1].position", pointLightPositions[1]);
@@ -203,7 +253,7 @@ int main()
 	containerShader.setVec3("pointLights[1].diffuse", 0.8f, 0.8f, 0.8f);
 	containerShader.setVec3("pointLights[1].specular", 1.0f, 1.0f, 1.0f);
 	containerShader.setFloat("pointLights[1].constant", 1.0f);
-	containerShader.setFloat("pointLights[1].linear", 0.09);
+	containerShader.setFloat("pointLights[1].linear", 0.19);
 	containerShader.setFloat("pointLights[1].quadratic", 0.032);
 	// point light 3
 	//containerShader.setVec3("pointLights[2].position", pointLightPositions[2]);
@@ -211,7 +261,7 @@ int main()
 	containerShader.setVec3("pointLights[2].diffuse", 0.8f, 0.8f, 0.8f);
 	containerShader.setVec3("pointLights[2].specular", 1.0f, 1.0f, 1.0f);
 	containerShader.setFloat("pointLights[2].constant", 1.0f);
-	containerShader.setFloat("pointLights[2].linear", 0.09);
+	containerShader.setFloat("pointLights[2].linear", 0.19);
 	containerShader.setFloat("pointLights[2].quadratic", 0.032);
 	// point light 4
 	//containerShader.setVec3("pointLights[3].position", pointLightPositions[3]);
@@ -219,9 +269,10 @@ int main()
 	containerShader.setVec3("pointLights[3].diffuse", 0.8f, 0.8f, 0.8f);
 	containerShader.setVec3("pointLights[3].specular", 1.0f, 1.0f, 1.0f);
 	containerShader.setFloat("pointLights[3].constant", 1.0f);
-	containerShader.setFloat("pointLights[3].linear", 0.09);
+	containerShader.setFloat("pointLights[3].linear", 0.19);
 	containerShader.setFloat("pointLights[3].quadratic", 0.032);
 
+#pragma endregion
 	while (!glfwWindowShouldClose(window))
 	{
 		float currentFrame = glfwGetTime();
@@ -230,6 +281,7 @@ int main()
 		// input
 		// -----
 		processInput(window);
+
 
 		glClearColor(0.4f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -245,6 +297,19 @@ int main()
 		// view/projection transformations
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 		glm::mat4 view = camera.GetViewMatrix();
+		double x, y;
+		glfwGetCursorPos(window, &x, &y);
+		glm::vec3 ray = camera.screenPointToWorldRay(projection, glm::vec2(SCR_WIDTH, SCR_HEIGHT), glm::vec2(x, y));
+
+		glUseProgram(NULL);
+		glLineWidth(15);
+		glColor3f(1, 1, 1);
+		glBegin(GL_LINES);
+		glVertex3f(camera.Position.x, camera.Position.y, camera.Position.z);
+		glVertex3f(ray.x * 1000, ray.y * 1000, ray.z * 1000);
+		glEnd();
+
+		containerShader.use();
 		containerShader.setMat4("projection", projection);
 		containerShader.setMat4("view", view);
 
@@ -303,12 +368,24 @@ int main()
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
 
+		transparentShader.use();
+		transparentShader.setMat4("projection", projection);
+		transparentShader.setMat4("view", view);
+
+		glBindVertexArray(transparentVAO);
+		glBindTexture(GL_TEXTURE_2D, transparentTexture);
+		for (unsigned int i = 0; i < vegetation.size(); i++)
+		{
+			model = glm::mat4();
+			model = glm::translate(model, vegetation[i]);
+			transparentShader.setMat4("model", model);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+		}
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
-	// de-allocate all resources once they've outlived their purpose:
-	// ------------------------------------------------------------------------
 	glDeleteVertexArrays(1, &cubeVAO);
 	glDeleteVertexArrays(1, &lightVAO);
 	glDeleteBuffers(1, &VBO);
@@ -362,7 +439,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	camera.ProcessMouseScroll(yoffset);
 }
-unsigned int loadTexture(char const * path)
+unsigned int loadTexture(char const * path, bool clampTexture)
 {
 	unsigned int textureID;
 	glGenTextures(1, &textureID);
@@ -382,9 +459,9 @@ unsigned int loadTexture(char const * path)
 		glBindTexture(GL_TEXTURE_2D, textureID);
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		GLenum type = (clampTexture == true) ? GL_CLAMP_TO_EDGE : GL_REPEAT;
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, type);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, type);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
