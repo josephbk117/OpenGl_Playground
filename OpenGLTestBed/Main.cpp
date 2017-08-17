@@ -52,7 +52,7 @@ int main()
 	glfwSetScrollCallback(window, scroll_callback);
 
 	// tell GLFW to capture our mouse
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
@@ -282,7 +282,6 @@ int main()
 		// -----
 		processInput(window);
 
-
 		glClearColor(0.4f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -299,13 +298,18 @@ int main()
 		glm::mat4 view = camera.GetViewMatrix();
 		double x, y;
 		glfwGetCursorPos(window, &x, &y);
-		glm::vec3 ray = camera.screenPointToWorldRay(projection, glm::vec2(SCR_WIDTH, SCR_HEIGHT), glm::vec2(x, y));
+		glm::vec3 ray = camera.screenPointToWorldRay(projection, glm::vec2(SCR_WIDTH, SCR_HEIGHT), glm::vec2(x, SCR_HEIGHT - y));
 
 		glUseProgram(NULL);
 		glLineWidth(15);
-		glColor3f(1, 1, 1);
+		glColor3f(0, 1, 0);
 		glBegin(GL_LINES);
 		glVertex3f(camera.Position.x, camera.Position.y, camera.Position.z);
+		glVertex3f(ray.x * 10000, ray.y * 10000, ray.z * 10000);
+		glEnd();
+		glPointSize(100);
+		glColor3f(1, 1, 0);
+		glBegin(GL_POINTS);
 		glVertex3f(ray.x * 1000, ray.y * 1000, ray.z * 1000);
 		glEnd();
 
@@ -432,7 +436,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	lastX = xpos;
 	lastY = ypos;
 
-	camera.ProcessMouseMovement(xoffset, yoffset);
+	//camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
