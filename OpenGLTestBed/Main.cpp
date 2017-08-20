@@ -66,7 +66,10 @@ int main()
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_MULTISAMPLE);
+
 
 	GLenum err = glewInit();
 
@@ -200,6 +203,7 @@ int main()
 	unsigned int diffuseMap = loadTexture("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\cartoonyCrate.jpg", false);
 	unsigned int specularMap = loadTexture("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\cartoonyCrate_Specular.jpg", false);
 	unsigned int transparentTexture = loadTexture("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\flowers.png", true);
+	unsigned int translucentText = loadTexture("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\semiTrans.png", true);
 
 	transparentShader.use();
 	transparentShader.setInt("transTexture", 0);
@@ -220,6 +224,14 @@ int main()
 		glm::vec3(0.5f, 0.0f, -0.6f)
 	};
 
+	std::vector<glm::vec3> translucentPositions
+	{
+		glm::vec3(-2.5f, 0.0f, -0.7f),
+		glm::vec3(3.5f, 0.0f, 0.51f),
+		glm::vec3(0.0f, 0.0f, 1.6f),
+		glm::vec3(-0.6f, 0.0f, -3.3f),
+		glm::vec3(0.9f, 0.0f, -1.6f)
+	};
 
 	// positions all containers
 	glm::vec3 cubePositions[] = {
@@ -393,6 +405,14 @@ int main()
 		{
 			model = glm::mat4();
 			model = glm::translate(model, vegetation[i]);
+			transparentShader.setMat4("model", model);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+		}
+		glBindTexture(GL_TEXTURE_2D, translucentText);
+		for (unsigned int i = 0; i < translucentPositions.size(); i++)
+		{
+			model = glm::mat4();
+			model = glm::translate(model, translucentPositions[i]);
 			transparentShader.setMat4("model", model);
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 		}
