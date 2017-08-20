@@ -12,6 +12,10 @@
 #include "Model.h"
 #include "Mesh.h"
 
+//---Physics--//
+#include "BoundingSphere.h"
+#include "IntersectData.h"
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -36,6 +40,12 @@ unsigned int loadTexture(char const * path, bool);
 
 int main()
 {
+	BoundingSphere sphere1(glm::vec3(0, 0, 0), 3);
+	BoundingSphere sphere2(glm::vec3(0, 0, 3), 3);
+	IntersectData iData = sphere1.intersectBoundingSphere(sphere2);
+
+	std::cout << "Sphere 1 is intersecting : " << iData.getDoesIntersect() << " , distance : " << iData.getDistance();
+
 	glfwInit();
 	glfwWindowHint(GLFW_SAMPLES, 8);
 
@@ -52,7 +62,7 @@ int main()
 	glfwSetScrollCallback(window, scroll_callback);
 
 	// tell GLFW to capture our mouse
-	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
@@ -296,6 +306,7 @@ int main()
 		// view/projection transformations
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 		glm::mat4 view = camera.GetViewMatrix();
+		/*
 		double x, y;
 		glfwGetCursorPos(window, &x, &y);
 		glm::vec3 ray = camera.screenPointToWorldRay(projection, glm::vec2(SCR_WIDTH, SCR_HEIGHT), glm::vec2(x, SCR_HEIGHT - y));
@@ -312,8 +323,8 @@ int main()
 		glBegin(GL_POINTS);
 		glVertex3f(ray.x * 1000, ray.y * 1000, ray.z * 1000);
 		glEnd();
-
 		containerShader.use();
+		*/
 		containerShader.setMat4("projection", projection);
 		containerShader.setMat4("view", view);
 
@@ -436,7 +447,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	lastX = xpos;
 	lastY = ypos;
 
-	//camera.ProcessMouseMovement(xoffset, yoffset);
+	camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
