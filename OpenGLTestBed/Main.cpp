@@ -47,7 +47,7 @@ int main()
 	std::cout << "Sphere 1 is intersecting : " << iData.getDoesIntersect() << " , distance : " << iData.getDistance();
 
 	glfwInit();
-	glfwWindowHint(GLFW_SAMPLES, 8);
+	//glfwWindowHint(GLFW_SAMPLES, 8); -- Multisampling wont work until i set samples for the frame buffer
 
 	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
 	if (window == NULL)
@@ -68,8 +68,7 @@ int main()
 	glDepthFunc(GL_LESS);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_MULTISAMPLE);
-
+	//glEnable(GL_MULTISAMPLE);
 
 	GLenum err = glewInit();
 
