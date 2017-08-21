@@ -491,7 +491,6 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
-
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
@@ -499,7 +498,9 @@ int main()
 	glDeleteVertexArrays(1, &cubeVAO);
 	glDeleteVertexArrays(1, &lightVAO);
 	glDeleteVertexArrays(1, &quadVAO);
+	glDeleteVertexArrays(1, &transparentVAO);
 	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &transparentVBO);
 	glDeleteBuffers(1, &quadVBO);
 
 	glfwTerminate();
