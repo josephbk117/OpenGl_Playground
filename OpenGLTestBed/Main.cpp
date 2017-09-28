@@ -20,6 +20,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
+unsigned int loadCubemap(std::vector<std::string> faces);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -85,6 +86,8 @@ int main()
 		"C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\transparentBasic.fs");
 	Shader screenShader("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\screenShader.vs",
 		"C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\screenShader.fs");
+	Shader cubeMapShader("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\cubeMap.vs",
+		"C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\cubeMap.fs");
 
 
 	Model ourModel("C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\nanosuit2.obj");
@@ -209,7 +212,7 @@ int main()
 	glBindVertexArray(0);
 	//------------
 
-	//________FRame buffer stuff___________
+	//________Frame buffer stuff___________
 	// screen quad VAO
 	unsigned int quadVAO, quadVBO;
 	glGenVertexArrays(1, &quadVAO);
@@ -348,59 +351,120 @@ int main()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
+	//______CREATING CUBEMAP______
+	float skyboxVertices[] = {
+		// positions          
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+		1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		-1.0f,  1.0f, -1.0f,
+		1.0f,  1.0f, -1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		1.0f, -1.0f,  1.0f
+	};
+	unsigned int cubemapVAO, cubemapVBO;
+	glGenVertexArrays(1, &cubemapVAO);
+	glGenBuffers(1, &cubemapVBO);
+	glBindVertexArray(cubemapVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	std::vector<std::string> faces
+	{
+		"C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\right.jpg",
+		"C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\left.jpg",
+		"C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\top.jpg",
+		"C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\bottom.jpg",
+		"C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\back.jpg",
+		"C:\\Users\\josep_000\\Documents\\Visual Studio 2017\\Projects\\OpenGl_Playground\\Debug\\front.jpg"
+	};
+	unsigned int cubemapTexture = loadCubemap(faces);
+	cubeMapShader.use();
+	cubeMapShader.setInt("skybox", 0);
+
+	glEnable(GL_DEPTH_TEST);
 #pragma endregion
 	while (!glfwWindowShouldClose(window))
 	{
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
-		// input
-		// -----
+		
 		processInput(window);
 
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
+		glm::mat4 view = camera.GetViewMatrix();
 		// bind to framebuffer and draw scene as we normally would to color texture 
-		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-		glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
+		
+		//glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+		//glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
 
 								 // make sure we clear the framebuffer's content
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
+		// draw skybox as last
+		//glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
+		cubeMapShader.use();
+		
+		cubeMapShader.setMat4("view", glm::mat4(glm::mat3(camera.GetViewMatrix())));
+		cubeMapShader.setMat4("projection", projection);
+		// skybox cube
+		glBindVertexArray(cubemapVAO);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glBindVertexArray(0);
+		//glDepthFunc(GL_LESS); // set depth function back to default
+
 		// be sure to activate shader when setting uniforms/drawing objects
 		containerShader.use();
-		containerShader.setVec3("material.ambient", glm::vec3(1.0f, 0.5f, 0.31f));
+		containerShader.setVec3("material.ambient", glm::vec3(0.2f, 0.2f, 0.4f));
 		containerShader.setVec3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
 		containerShader.setFloat("material.shininess", 20);
 
 		containerShader.setVec3("viewPos", camera.Position);
 
 		// view/projection transformations
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-		glm::mat4 view = camera.GetViewMatrix();
-		/*
-		double x, y;
-		glfwGetCursorPos(window, &x, &y);
-		glm::vec3 ray = camera.screenPointToWorldRay(projection, glm::vec2(SCR_WIDTH, SCR_HEIGHT), glm::vec2(x, SCR_HEIGHT - y));
 
-		glUseProgram(NULL);
-		glLineWidth(15);
-		glColor3f(0, 1, 0);
-		glBegin(GL_LINES);
-		glVertex3f(camera.Position.x, camera.Position.y, camera.Position.z);
-		glVertex3f(ray.x * 10000, ray.y * 10000, ray.z * 10000);
-		glEnd();
-		glPointSize(100);
-		glColor3f(1, 1, 0);
-		glBegin(GL_POINTS);
-		glVertex3f(ray.x * 1000, ray.y * 1000, ray.z * 1000);
-		glEnd();
-		containerShader.use();
-		*/
 		containerShader.setMat4("projection", projection);
 		containerShader.setMat4("view", view);
-
-		// world transformation
 		glm::mat4 model;
 		containerShader.setMat4("model", model);
 
@@ -479,16 +543,19 @@ int main()
 
 		//_______________________
 		// now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		//glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
 								  // clear all relevant buffers
-		glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessery actually, since we won't be able to see behind the quad anyways)
-		glClear(GL_COLOR_BUFFER_BIT);
+		//glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessery actually, since we won't be able to see behind the quad anyways)
+		//glClear(GL_COLOR_BUFFER_BIT);
 
-		screenShader.use();
-		glBindVertexArray(quadVAO);
-		glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		//screenShader.use();
+		//glBindVertexArray(quadVAO);
+		//glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
+		//glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		//________SKYBOX______
+		
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -510,7 +577,6 @@ void processInput(GLFWwindow *window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
-
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.ProcessKeyboard(FORWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -525,7 +591,6 @@ void processInput(GLFWwindow *window)
 // ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-
 	glViewport(0, 0, width, height);
 }
 
@@ -584,6 +649,37 @@ unsigned int loadTexture(char const * path, bool clampTexture)
 		std::cout << "Texture failed to load at path: " << path << std::endl;
 		stbi_image_free(data);
 	}
+
+	return textureID;
+}
+unsigned int loadCubemap(std::vector<std::string> faces)
+{
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+	int width, height, nrChannels;
+	for (unsigned int i = 0; i < faces.size(); i++)
+	{
+		unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+		if (data)
+		{
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+				0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+			);
+			stbi_image_free(data);
+		}
+		else
+		{
+			std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+			stbi_image_free(data);
+		}
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
 	return textureID;
 }
