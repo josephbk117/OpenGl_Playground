@@ -237,7 +237,7 @@ int main()
 	containerShader.use();
 	containerShader.setInt("diffuseTex", 0);
 	containerShader.setInt("specularTex", 1);
-
+	containerShader.setInt("skybox", 2);
 
 	// transparent vegetation locations
 	// --------------------------------
@@ -424,13 +424,13 @@ int main()
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
-		
+
 		processInput(window);
 
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
 		glm::mat4 view = camera.GetViewMatrix();
 		// bind to framebuffer and draw scene as we normally would to color texture 
-		
+
 		//glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 		//glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
 
@@ -442,7 +442,7 @@ int main()
 		// draw skybox as last
 		//glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
 		cubeMapShader.use();
-		
+
 		cubeMapShader.setMat4("view", glm::mat4(glm::mat3(camera.GetViewMatrix())));
 		cubeMapShader.setMat4("projection", projection);
 		// skybox cube
@@ -455,6 +455,7 @@ int main()
 
 		// be sure to activate shader when setting uniforms/drawing objects
 		containerShader.use();
+
 		containerShader.setVec3("material.ambient", glm::vec3(0.2f, 0.2f, 0.4f));
 		containerShader.setVec3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
 		containerShader.setFloat("material.shininess", 20);
@@ -473,6 +474,8 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, diffuseMap);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, specularMap);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
 
 		containerShader.setMat4("model", glm::translate(model, glm::vec3(2, 0, 4)) * glm::scale(model, glm::vec3(0.2, 0.2, 0.2)) * glm::rotate(model, glm::radians(-90.0f), glm::vec3(0, 1, 0)));
 		houseModel.Draw(containerShader);
@@ -555,7 +558,7 @@ int main()
 		//glDrawArrays(GL_TRIANGLES, 0, 6);
 
 		//________SKYBOX______
-		
+
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
